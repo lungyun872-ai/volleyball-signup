@@ -3,125 +3,540 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>排球社本週報名系統</title>
-  <!-- 引入 Tailwind CSS 快速美化 UI -->
+  <title>排球社報名系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+    }
+  </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-gradient-to-br from-sky-100 via-blue-50 to-emerald-50 text-slate-800 min-h-screen flex flex-col items-center justify-center p-3 sm:p-6">
 
-  <div class="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
-    <!-- 標題與活動資訊 -->
-    <div class="text-center mb-6">
-      <h1 class="text-2xl font-bold text-indigo-600 mb-1">🏐 排球社本週打球報名</h1>
-      <p id="event-date" class="text-gray-500 font-medium">活動日期：2026/09/25 (五) 18:30</p>
+  <div class="w-full max-w-lg bg-white border border-sky-100 shadow-xl shadow-sky-900/5 rounded-3xl overflow-hidden relative">
+    
+    <!-- Header Card: Nanshan Blue & Fresh Green Theme -->
+    <div class="bg-gradient-to-r from-sky-500 via-blue-500 to-teal-500 text-white p-6 relative">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-white text-sky-600 flex items-center justify-center text-2xl shadow-md font-bold">
+            🏐
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold tracking-wide text-white">排球社本週報名</h1>
+            <p class="text-xs text-sky-100 font-medium">Volleyball Club Registration</p>
+          </div>
+        </div>
+
+        <!-- 需求 1: 低調單一圖案 ⚙️ 社長管理按鈕 (需密碼驗證) -->
+        <button onclick="requestAdminAccess()" aria-label="管理員專區" title="社長管理後台" class="no-print w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition flex items-center justify-center border border-white/20 active:scale-95 text-xs">
+          ⚙️
+        </button>
+      </div>
+
+      <!-- Club Date Display Badge -->
+      <div class="mt-4 inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white">
+        <span class="text-emerald-300 font-bold">📅 社團時間：</span>
+        <span id="club-date-display" class="font-bold">2026/09/25 (五) 18:30</span>
+      </div>
     </div>
 
-    <!-- 社員報名表單 -->
-    <div id="signup-form" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">請輸入員工編號</label>
+    <!-- SECTION 1: Member Signup View -->
+    <div id="view-user" class="p-5 sm:p-6 space-y-6">
+      
+      <!-- Query Box -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-sky-800 tracking-wider">請輸入員工編號</label>
         <div class="flex gap-2">
-          <input type="text" id="emp-id" placeholder="例如：E001" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-          <button onclick="checkEmployee()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition">查詢</button>
+          <input type="text" id="emp-id-input" placeholder="例如：E050 或 E001" class="flex-1 bg-slate-50 border border-sky-200 text-slate-800 placeholder-slate-400 rounded-2xl px-4 py-3 focus:ring-2 focus:ring-sky-400 focus:border-sky-400 outline-none font-semibold uppercase transition">
+          <button onclick="handleSearch()" class="bg-sky-500 hover:bg-sky-600 text-white font-extrabold px-6 py-3 rounded-2xl transition shadow-md shadow-sky-500/20 active:scale-95 text-sm">
+            查詢
+          </button>
         </div>
       </div>
 
-      <!-- 查詢後自動跳出的姓名與確認資訊 -->
-      <div id="member-info" class="hidden p-4 bg-indigo-50 border border-indigo-100 rounded-lg space-y-2">
-        <p class="text-sm text-gray-600">社員姓名：<span id="member-name" class="font-bold text-gray-800 text-lg">---</span></p>
-        <p class="text-sm text-gray-600">所屬部門：<span id="member-dept" class="font-medium text-gray-700">---</span></p>
-        
-        <div class="pt-2 flex gap-3">
-          <button onclick="submitAttendance('Present')" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-bold transition shadow">✅ 我要出席</button>
-          <button onclick="submitAttendance('Absent')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg font-bold transition">❌ 請假/不出席</button>
+      <!-- Result Card: Found Member (需求 2: 乾淨版面，完全無'已去識別化'字眼) -->
+      <div id="card-member-found" class="hidden bg-sky-50/70 border border-sky-200 rounded-2xl p-4 space-y-4 shadow-sm">
+        <div class="flex justify-between items-center border-b border-sky-100 pb-2.5">
+          <span class="text-xs font-bold text-sky-700">社員身份資訊</span>
+          <span class="text-[11px] text-slate-500">請確認是否為本人</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div><span class="text-slate-500 text-xs">員工編號：</span><div id="info-emp-id" class="font-bold text-slate-800">---</div></div>
+          <div><span class="text-slate-500 text-xs">所屬部門：</span><div id="info-dept" class="font-bold text-slate-800">---</div></div>
+          <div class="col-span-2 pt-1"><span class="text-slate-500 text-xs">社員姓名：</span><div id="info-name-masked" class="font-extrabold text-sky-600 text-lg">---</div></div>
+        </div>
+
+        <div class="pt-2 flex gap-2">
+          <button onclick="confirmRegistration()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3 rounded-xl transition shadow-md shadow-emerald-500/20 active:scale-95 text-sm flex items-center justify-center gap-1.5">
+            <span>✅</span> 確認報名出席
+          </button>
+          <button id="btn-cancel-reg" onclick="cancelRegistration()" class="hidden flex-1 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-200 font-bold py-3 rounded-xl transition active:scale-95 text-sm flex items-center justify-center gap-1.5">
+            <span>❌</span> 取消報名
+          </button>
         </div>
       </div>
 
-      <!-- 報名成功狀態訊息 -->
-      <div id="status-message" class="hidden p-3 rounded-lg text-center font-medium"></div>
+      <!-- Result Card: Member Not Found -->
+      <div id="card-member-not-found" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center gap-2 text-amber-800 font-bold text-sm">
+          <span>⚠️</span> 系統庫中查無此員工編號資料！
+        </div>
+        <p class="text-xs text-amber-700 leading-relaxed">您可以點擊下方按鈕手動填寫資訊完成報名，社長後續會協助將您加入社員名冊。</p>
+        <button onclick="toggleManualForm(true)" class="w-full bg-white hover:bg-slate-50 text-sky-600 border border-sky-300 font-bold py-2.5 rounded-xl text-sm transition shadow-sm">
+          ✍️ 手動填寫報名資料
+        </button>
+
+        <!-- Manual Input Fields -->
+        <div id="form-manual-entry" class="hidden pt-3 border-t border-amber-200 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700">姓名</label>
+            <input type="text" id="manual-name" placeholder="請輸入姓名 (如: 張小明)" class="w-full bg-white border border-slate-300 text-slate-800 rounded-xl px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-sky-400 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700">部門</label>
+            <input type="text" id="manual-dept" placeholder="請輸入部門 (如: 研發部)" class="w-full bg-white border border-slate-300 text-slate-800 rounded-xl px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-sky-400 outline-none">
+          </div>
+          <button onclick="submitManualRegistration()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm">
+            送出手動報名
+          </button>
+        </div>
+      </div>
+
+      <!-- Feedback Toast -->
+      <div id="toast-message" class="hidden p-3.5 rounded-xl text-center text-sm font-bold shadow-sm"></div>
+
+      <!-- Public Attendee List -->
+      <div class="border-t border-slate-100 pt-5">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+            <span>📊</span> 本週已報名名單 (<span id="attendee-count" class="text-sky-600 font-extrabold">0</span> 人)
+          </h2>
+          <span class="text-[11px] text-slate-400">即時自動更新</span>
+        </div>
+        <ul id="attendee-list-ui" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <!-- Dynamic Items inserted here -->
+        </ul>
+      </div>
+
     </div>
 
-    <!-- 當週已報名人員名單 -->
-    <div class="mt-8 border-t pt-4">
-      <h2 class="text-md font-bold text-gray-700 mb-2">📊 目前已報名名單 (<span id="attendee-count">2</span> 人)</h2>
-      <ul id="attendee-list" class="space-y-1 text-sm text-gray-600 max-h-40 overflow-y-auto">
-        <li class="p-2 bg-gray-50 rounded flex justify-between"><span>E001 張小明</span><span class="text-green-600 font-bold">出席</span></li>
-        <li class="p-2 bg-gray-50 rounded flex justify-between"><span>E002 李小華</span><span class="text-green-600 font-bold">出席</span></li>
-      </ul>
+    <!-- SECTION 2: President Admin Panel (Protected) -->
+    <div id="view-admin" class="hidden p-5 sm:p-6 space-y-5 bg-slate-50/50">
+      
+      <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">👑</span>
+          <h2 class="font-extrabold text-sky-700 text-base">社長管理控制台</h2>
+        </div>
+        <button onclick="exitAdminView()" class="text-xs bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 px-3 py-1.5 rounded-xl transition font-semibold">
+          🚪 離開管理頁面
+        </button>
+      </div>
+
+      <!-- Date Setting Block -->
+      <div class="bg-white border border-sky-100 rounded-2xl p-4 space-y-3 shadow-sm">
+        <h3 class="font-bold text-slate-700 text-sm flex items-center gap-1.5">
+          📅 設定下一次社團時間
+        </h3>
+        <div class="flex gap-2">
+          <input type="text" id="admin-date-input" placeholder="例如：2026/10/02 (五) 18:30" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 outline-none">
+          <button onclick="updateClubDate()" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow-sm">
+            更新時間
+          </button>
+        </div>
+      </div>
+
+      <!-- GAS Config Block -->
+      <div class="bg-white border border-sky-100 rounded-2xl p-4 space-y-2 shadow-sm">
+        <h3 class="font-bold text-slate-700 text-sm flex items-center gap-1.5">
+          🔗 Google Apps Script 網址 (後端 API)
+        </h3>
+        <input type="text" id="admin-gas-url" placeholder="貼上您的 Web App URL..." class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-sky-400 outline-none">
+        <p class="text-[11px] text-slate-400">未設定時系統將自動開啟「本地測試展示模式」。</p>
+      </div>
+
+      <!-- Password Change Block -->
+      <div class="bg-white border border-sky-100 rounded-2xl p-4 space-y-3 shadow-sm">
+        <h3 class="font-bold text-slate-700 text-sm flex items-center gap-1.5">
+          🔑 修改社長後台密碼
+        </h3>
+        <div class="flex gap-2">
+          <input type="password" id="admin-new-pass" placeholder="輸入新密碼 (預設: 8888)" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-400 outline-none">
+          <button onclick="changeAdminPassword()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+            變更密碼
+          </button>
+        </div>
+      </div>
+
+      <!-- End Registration & Export Actions -->
+      <div class="pt-2 space-y-3">
+        <button onclick="finishRegistration()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3.5 rounded-2xl transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 text-sm">
+          <span>🏁</span> 結束本週報名 & 產生簽到單 / 匯出 CSV
+        </button>
+      </div>
+
+      <!-- Printable Sign-In Sheet Preview -->
+      <div id="sign-in-sheet-preview" class="hidden border border-slate-200 rounded-2xl p-4 bg-slate-100 text-slate-800 space-y-4">
+        <div class="bg-white p-4 rounded-xl space-y-3 border border-slate-200 shadow-sm">
+          <div class="text-center border-b pb-3 border-slate-200">
+            <h2 class="text-xl font-extrabold text-sky-800">排球社活動簽到表</h2>
+            <p class="text-xs text-slate-500 mt-1">社團時間：<span id="print-sheet-date">---</span></p>
+          </div>
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="bg-sky-50 border-b border-sky-100 text-sky-800">
+                <th class="p-2 border border-slate-200">項次</th>
+                <th class="p-2 border border-slate-200">工號</th>
+                <th class="p-2 border border-slate-200">姓名</th>
+                <th class="p-2 border border-slate-200">部門</th>
+                <th class="p-2 border border-slate-200">現場簽名欄</th>
+              </tr>
+            </thead>
+            <tbody id="sign-in-table-body">
+              <!-- Dynamic rows -->
+            </tbody>
+          </table>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="window.print()" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm">🖨️ 列印簽到單</button>
+          <button onclick="downloadCSV()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm">📥 下載 CSV 到本地</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- 前端邏輯 (Mockup 假資料階段) -->
+  <!-- Admin Passcode Verification Modal -->
+  <div id="admin-auth-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-sky-100 rounded-3xl p-6 w-full max-w-xs space-y-4 shadow-2xl animate-fade-in">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center mx-auto text-sky-600 text-2xl mb-2">
+          🔒
+        </div>
+        <h3 class="font-extrabold text-slate-800 text-base">社長身份驗證</h3>
+        <p class="text-xs text-slate-500">請輸入管理者存取密碼</p>
+      </div>
+      <div>
+        <input type="password" id="admin-passcode-input" placeholder="預設密碼: 8888" class="w-full bg-slate-50 border border-slate-200 text-center text-slate-800 tracking-widest text-lg rounded-2xl px-3 py-2.5 focus:ring-2 focus:ring-sky-400 outline-none">
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeAdminAuthModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs transition">
+          取消
+        </button>
+        <button onclick="verifyAdminPasscode()" class="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-extrabold py-2.5 rounded-xl text-xs transition shadow-md shadow-sky-500/20">
+          確認登入
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // 假資料庫（模擬未來的 Google Sheet 社員名冊）
-    const mockMembers = {
+    // System State & Initial Mock Data
+    let gasUrl = localStorage.getItem('gas_url') || '';
+    let currentClubDate = localStorage.getItem('club_date') || '2026/09/25 (五) 18:30';
+    let adminPasscode = localStorage.getItem('admin_passcode') || '8888';
+    
+    // Default Mock Database
+    const mockDb = {
       "E001": { name: "張小明", dept: "資訊部" },
       "E002": { name: "李小華", dept: "行銷部" },
-      "E003": { name: "王大明", dept: "設計部" }
+      "E003": { name: "王大明", dept: "設計部" },
+      "E050": { name: "陳冠宇", dept: "研發部" }
     };
 
-    function checkEmployee() {
-      const id = document.getElementById("emp-id").value.trim().toUpperCase();
-      const infoBox = document.getElementById("member-info");
-      const nameSpan = document.getElementById("member-name");
-      const deptSpan = document.getElementById("member-dept");
+    // Attendees storage in local demo mode
+    let attendees = JSON.parse(localStorage.getItem('attendees_list') || '[{"empId":"E001","name":"張小明","dept":"資訊部","isManual":false},{"empId":"E002","name":"李小華","dept":"行銷部","isManual":false}]');
+    let currentSearchedMember = null;
 
-      if (mockMembers[id]) {
-        nameSpan.innerText = mockMembers[id].name;
-        deptSpan.innerText = mockMembers[id].dept;
-        infoBox.classList.remove("hidden");
+    window.onload = function() {
+      document.getElementById('club-date-display').innerText = currentClubDate;
+      document.getElementById('admin-date-input').value = currentClubDate;
+      document.getElementById('admin-gas-url').value = gasUrl;
+      renderAttendeesUI();
+    };
+
+    // Mask name helper function (e.g. 張小明 -> 張*明)
+    function maskName(name) {
+      if (!name) return "";
+      const len = name.length;
+      if (len <= 1) return name;
+      if (len === 2) return name[0] + "*";
+      if (len === 3) return name[0] + "*" + name[2];
+      return name[0] + "*".repeat(len - 2) + name[len - 1];
+    }
+
+    function requestAdminAccess() {
+      document.getElementById('admin-passcode-input').value = '';
+      document.getElementById('admin-auth-modal').classList.remove('hidden');
+      document.getElementById('admin-passcode-input').focus();
+    }
+
+    function closeAdminAuthModal() {
+      document.getElementById('admin-auth-modal').classList.add('hidden');
+    }
+
+    function verifyAdminPasscode() {
+      const inputPass = document.getElementById('admin-passcode-input').value.trim();
+      if (inputPass === adminPasscode) {
+        closeAdminAuthModal();
+        document.getElementById('view-user').classList.add('hidden');
+        document.getElementById('view-admin').classList.remove('hidden');
       } else {
-        alert("找不到此員工編號，請確認後再試一次！");
-        infoBox.classList.add("hidden");
+        showToast("❌ 密碼錯誤！只有社長可以開啟控制台。", "bg-rose-100 text-rose-700 border border-rose-200");
       }
     }
 
-    function submitAttendance(status) {
-      const name = document.getElementById("member-name").innerText;
-      const statusBox = document.getElementById("status-message");
+    function exitAdminView() {
+      document.getElementById('view-admin').classList.add('hidden');
+      document.getElementById('view-user').classList.remove('hidden');
+    }
+
+    function changeAdminPassword() {
+      const newPass = document.getElementById('admin-new-pass').value.trim();
+      if (!newPass) return showToast("⚠️ 請輸入新密碼", "bg-amber-100 text-amber-700 border border-amber-200");
+      adminPasscode = newPass;
+      localStorage.setItem('admin_passcode', newPass);
+      showToast("✅ 社長密碼修改成功！", "bg-emerald-100 text-emerald-700 border border-emerald-200");
+      document.getElementById('admin-new-pass').value = '';
+    }
+
+    async function handleSearch() {
+      const empId = document.getElementById('emp-id-input').value.trim().toUpperCase();
+      if (!empId) {
+        showToast("⚠️ 請先輸入員工編號", "bg-amber-100 text-amber-800 border border-amber-200");
+        return;
+      }
+
+      hideCards();
       
-      statusBox.classList.remove("hidden");
-      if (status === 'Present') {
-        statusBox.className = "p-3 rounded-lg text-center font-medium bg-green-100 text-green-700";
-        statusBox.innerText = `🎉 ${name} 報名成功！期待當天見面！`;
+      if (gasUrl) {
+        showToast("🔍 正在連線查詢...", "bg-sky-100 text-sky-800 border border-sky-200");
+        try {
+          const res = await fetch(`${gasUrl}?action=getMember&id=${empId}`);
+          const data = await res.json();
+          if (data.success) {
+            displayFoundMember(empId, data.name, data.dept);
+          } else {
+            displayNotFoundCard(empId);
+          }
+        } catch (e) {
+          showToast("⚠️ API 連線失敗，自動啟用本地模式搜尋", "bg-amber-100 text-amber-800 border border-amber-200");
+          searchLocalDb(empId);
+        }
       } else {
-        statusBox.className = "p-3 rounded-lg text-center font-medium bg-gray-100 text-gray-700";
-        statusBox.innerText = `👌 已記錄 ${name} 本週不出席。`;
+        searchLocalDb(empId);
       }
     }
-[javascript]
-// 替換為你的 GAS Web App URL
-const GAS_URL = "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec";
 
-async function checkEmployee() {
-  const id = document.getElementById("emp-id").value.trim().toUpperCase();
-  if (!id) return alert("請輸入員工編號");
+    function searchLocalDb(empId) {
+      if (mockDb[empId]) {
+        displayFoundMember(empId, mockDb[empId].name, mockDb[empId].dept);
+      } else {
+        displayNotFoundCard(empId);
+      }
+    }
 
-  const response = await fetch(`${GAS_URL}?action=getMember&id=${id}`);
-  const result = await response.json();
+    function displayFoundMember(empId, name, dept) {
+      currentSearchedMember = { empId, name, dept };
+      document.getElementById('info-emp-id').innerText = empId;
+      document.getElementById('info-dept').innerText = dept;
+      document.getElementById('info-name-masked').innerText = maskName(name);
 
-  if (result.success) {
-    document.getElementById("member-name").innerText = result.name;
-    document.getElementById("member-dept").innerText = result.dept;
-    document.getElementById("member-info").classList.remove("hidden");
-  } else {
-    alert("找不到此員工編號！");
-  }
-}
+      const isAlreadyRegistered = attendees.some(a => a.empId === empId);
+      document.getElementById('btn-cancel-reg').classList.toggle('hidden', !isAlreadyRegistered);
 
-async function submitAttendance(status) {
-  const empId = document.getElementById("emp-id").value.trim().toUpperCase();
-  const name = document.getElementById("member-name").innerText;
+      document.getElementById('card-member-found').classList.remove('hidden');
+      hideToast();
+    }
 
-  const response = await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({ empId: empId, name: name, status: status })
-  });
+    function displayNotFoundCard(empId) {
+      currentSearchedMember = { empId, isManual: true };
+      document.getElementById('card-member-not-found').classList.remove('hidden');
+      hideToast();
+    }
 
-  const result = await response.json();
-  if (result.success) {
-    alert("報名成功並已寫入 Google Sheet！");
-  }
-}
+    function toggleManualForm(show) {
+      document.getElementById('form-manual-entry').classList.toggle('hidden', !show);
+    }
+
+    async function confirmRegistration() {
+      if (!currentSearchedMember) return;
+      const { empId, name, dept } = currentSearchedMember;
+
+      if (attendees.some(a => a.empId === empId)) {
+        showToast("ℹ️ 您已經在報名名單中了！", "bg-sky-100 text-sky-800 border border-sky-200");
+        return;
+      }
+
+      attendees.push({ empId, name, dept, isManual: false });
+      saveAttendees();
+      renderAttendeesUI();
+
+      if (gasUrl) {
+        fetch(gasUrl, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'register', empId, name, dept, status: 'Present' })
+        }).catch(err => console.log(err));
+      }
+
+      showToast(`🎉 報名成功！期待當天見面！`, "bg-emerald-100 text-emerald-800 border border-emerald-200");
+      hideCards();
+    }
+
+    function submitManualRegistration() {
+      const name = document.getElementById('manual-name').value.trim();
+      const dept = document.getElementById('manual-dept').value.trim();
+      const empId = currentSearchedMember?.empId || "TEMP" + Math.floor(Math.random()*1000);
+
+      if (!name || !dept) {
+        showToast("⚠️ 請完整的填寫姓名與部門", "bg-amber-100 text-amber-800 border border-amber-200");
+        return;
+      }
+
+      attendees.push({ empId, name, dept, isManual: true });
+      saveAttendees();
+      renderAttendeesUI();
+
+      showToast(`🎉 手動報名完成！姓名已加入報名表。`, "bg-emerald-100 text-emerald-800 border border-emerald-200");
+      hideCards();
+    }
+
+    function cancelRegistration() {
+      if (!currentSearchedMember) return;
+      const empId = currentSearchedMember.empId;
+
+      attendees = attendees.filter(a => a.empId !== empId);
+      saveAttendees();
+      renderAttendeesUI();
+
+      if (gasUrl) {
+        fetch(gasUrl, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'cancel', empId })
+        }).catch(err => console.log(err));
+      }
+
+      showToast(`🗑️ 已成功取消報名！`, "bg-slate-100 text-slate-700 border border-slate-200");
+      hideCards();
+    }
+
+    function renderAttendeesUI() {
+      const listEl = document.getElementById('attendee-list-ui');
+      document.getElementById('attendee-count').innerText = attendees.length;
+      listEl.innerHTML = '';
+
+      if (attendees.length === 0) {
+        listEl.innerHTML = `<li class="text-center text-xs text-slate-400 py-4">目前尚無社員報名</li>`;
+        return;
+      }
+
+      attendees.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = "p-3 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between text-xs sm:text-sm shadow-sm";
+        li.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-[10px]">${index + 1}</span>
+            <span class="font-bold text-slate-800">${maskName(item.name)}</span>
+            <span class="text-slate-400 text-xs">(${item.empId})</span>
+            ${item.isManual ? '<span class="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] px-1.5 py-0.5 rounded-md font-medium">手動</span>' : ''}
+          </div>
+          <span class="text-slate-500 font-medium text-xs">${item.dept}</span>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    function updateClubDate() {
+      const newDate = document.getElementById('admin-date-input').value.trim();
+      if (!newDate) return;
+      currentClubDate = newDate;
+      localStorage.setItem('club_date', newDate);
+      document.getElementById('club-date-display').innerText = newDate;
+      
+      gasUrl = document.getElementById('admin-gas-url').value.trim();
+      localStorage.setItem('gas_url', gasUrl);
+
+      showToast("✅ 社團時間設定成功！", "bg-emerald-100 text-emerald-800 border border-emerald-200");
+    }
+
+    async function finishRegistration() {
+      const preview = document.getElementById('sign-in-sheet-preview');
+      document.getElementById('print-sheet-date').innerText = currentClubDate;
+      
+      const tbody = document.getElementById('sign-in-table-body');
+      tbody.innerHTML = '';
+
+      attendees.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-200";
+        tr.innerHTML = `
+          <td class="p-2 border border-slate-200 text-center font-bold">${idx + 1}</td>
+          <td class="p-2 border border-slate-200 font-mono">${item.empId}</td>
+          <td class="p-2 border border-slate-200 font-bold">${item.name}</td>
+          <td class="p-2 border border-slate-200">${item.dept}</td>
+          <td class="p-2 border border-slate-200 w-28"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      preview.classList.remove('hidden');
+
+      if (gasUrl) {
+        try {
+          await fetch(gasUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'saveCsvToDrive',
+              date: currentClubDate,
+              attendees: attendees
+            })
+          });
+        } catch(e) {}
+      }
+    }
+
+    function downloadCSV() {
+      let csvContent = "\uFEFF";
+      csvContent += "項次,員工編號,社員姓名,部門,簽名欄\n";
+      
+      attendees.forEach((item, index) => {
+        csvContent += `${index + 1},${item.empId},${item.name},${item.dept},\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `排球社簽到單_${currentClubDate.replace(/[^0-9]/g, '')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function saveAttendees() {
+      localStorage.setItem('attendees_list', JSON.stringify(attendees));
+    }
+
+    function hideCards() {
+      document.getElementById('card-member-found').classList.add('hidden');
+      document.getElementById('card-member-not-found').classList.add('hidden');
+      document.getElementById('form-manual-entry').classList.add('hidden');
+    }
+
+    function showToast(msg, colorClass) {
+      const toast = document.getElementById('toast-message');
+      toast.className = `p-3.5 rounded-xl text-center text-sm font-bold shadow-sm ${colorClass}`;
+      toast.innerText = msg;
+      toast.classList.remove('hidden');
+    }
+
+    function hideToast() {
+      document.getElementById('toast-message').classList.add('hidden');
+    }
+  </script>
 </body>
 </html>
