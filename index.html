@@ -89,6 +89,39 @@
         statusBox.innerText = `👌 已記錄 ${name} 本週不出席。`;
       }
     }
-  </script>
+[javascript]
+// 替換為你的 GAS Web App URL
+const GAS_URL = "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec";
+
+async function checkEmployee() {
+  const id = document.getElementById("emp-id").value.trim().toUpperCase();
+  if (!id) return alert("請輸入員工編號");
+
+  const response = await fetch(`${GAS_URL}?action=getMember&id=${id}`);
+  const result = await response.json();
+
+  if (result.success) {
+    document.getElementById("member-name").innerText = result.name;
+    document.getElementById("member-dept").innerText = result.dept;
+    document.getElementById("member-info").classList.remove("hidden");
+  } else {
+    alert("找不到此員工編號！");
+  }
+}
+
+async function submitAttendance(status) {
+  const empId = document.getElementById("emp-id").value.trim().toUpperCase();
+  const name = document.getElementById("member-name").innerText;
+
+  const response = await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ empId: empId, name: name, status: status })
+  });
+
+  const result = await response.json();
+  if (result.success) {
+    alert("報名成功並已寫入 Google Sheet！");
+  }
+}
 </body>
 </html>
